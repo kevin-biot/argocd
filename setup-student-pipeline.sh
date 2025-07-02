@@ -31,6 +31,10 @@ FILES_RENDER_AND_APPLY=(
   # tekton/pvc.yaml              #  ⬅ REMOVED - PVC already created by deploy-students.sh
   tekton/pipeline.yaml
   shipwright/build/build.yaml
+)
+
+# ---------- ArgoCD Application (special namespace handling) ----------
+ARGOCD_APPLICATION=(
   argocd/application.yaml        #  ⬅ ArgoCD Application for GitOps
 )
 
@@ -48,7 +52,7 @@ FILES_RENDER_ONLY=(
 )
 
 echo -e "\n🛠️  Rendering files into: $DEST_DIR"
-for f in "${FILES_RENDER_AND_APPLY[@]}" "${FILES_RENDER_ONLY[@]}"; do
+for f in "${FILES_RENDER_AND_APPLY[@]}" "${ARGOCD_APPLICATION[@]}" "${FILES_RENDER_ONLY[@]}"; do
   tgt="$DEST_DIR/$(basename "$f")"
   sed -e "s|{{NAMESPACE}}|$NAMESPACE|g" \
       -e "s|{{GIT_REPO_URL}}|$REPO_URL|g" \
@@ -68,6 +72,12 @@ echo -e "\n🎯 Applying Tekton tasks (no templating needed):"
 for f in "${TEKTON_TASKS[@]}"; do
   echo "➡️  Applying $(basename "$f")"
   oc apply -n "$NAMESPACE" -f "$f"
+done
+
+echo -e "\n🏠 Applying ArgoCD Application to openshift-gitops:"
+for f in "${ARGOCD_APPLICATION[@]}"; do
+  echo "➡️  Applying $(basename "$f")"
+  oc apply -n openshift-gitops -f "$DEST_DIR/$(basename "$f")"
 done
 
 # ---------------------- student instructions ----------------------
