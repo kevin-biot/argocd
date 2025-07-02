@@ -1,0 +1,10 @@
+# buildrun.yaml
+apiVersion: shipwright.io/v1beta1
+kind: BuildRun
+metadata:
+  name: java-webapp-buildrun
+  namespace: {{NAMESPACE}}
+spec:
+  build:
+    name: java-webapp-build
+  # No need for additional parameters

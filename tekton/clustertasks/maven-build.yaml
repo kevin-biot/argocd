@@ -1,0 +1,36 @@
+apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  name: maven-build
+  labels:
+    tekton.dev/task: "maven-build"
+spec:
+  workspaces:
+    - name: source
+      description: The workspace containing the cloned repo
+  steps:
+    - name: pre-debug
+      image: alpine
+      script: |
+        #!/bin/sh
+        echo "📂 Full listing of /workspace/source"
+        ls -lR /workspace/source
+
+    - name: debug
+      image: maven:3.9.0-eclipse-temurin-17
+      script: |
+        #!/bin/sh
+        echo "🔍 Checking for pom.xml at the workspace root"
+        if [ ! -f /workspace/source/pom.xml ]; then
+          echo "❌ pom.xml NOT FOUND under /workspace/source!"
+          exit 1
+        fi
+        echo "✅ pom.xml found"
+
+    - name: build
+      image: maven:3.9.0-eclipse-temurin-17
+      workingDir: /workspace/source
+      script: |
+        #!/bin/sh
+        echo "🚀 Building with JDK 17"
+        mvn -B clean package

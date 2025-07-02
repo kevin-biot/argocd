@@ -1,0 +1,27 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: deploy               # <- same name the Pipeline already references
+spec:
+  params:
+    - name: manifest-path    # e.g. k8s/deployment.yaml
+      type: string
+    - name: namespace        # studentXX
+      type: string
+  workspaces:
+    - name: source           # repo checked-out by the clone task
+  steps:
+  - name: render-and-apply
+    image: bitnami/kubectl:latest         # tiny image that includes sed + kubectl
+    workingDir: $(workspaces.source.path) # points at repo root
+    script: |
+      #!/bin/sh
+      set -eu
+      echo "⛓️ Rendering $(params.manifest-path) with namespace $(params.namespace)"
+      # Replace the template token into a temp file
+      sed "s/{{NAMESPACE}}/$(params.namespace)/g" \
+          "$(params.manifest-path)" > /tmp/rendered.yaml
+      echo "✅ Result:"
+      cat /tmp/rendered.yaml
+      echo "🚀 kubectl apply -f /tmp/rendered.yaml -n $(params.namespace)"
+      kubectl apply -f /tmp/rendered.yaml -n $(params.namespace)

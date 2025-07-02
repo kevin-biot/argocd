@@ -1,0 +1,16 @@
+# File: pipeline-app-role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pipeline-deploy-permissions
+  namespace: {{NAMESPACE}}          # or parameterize per-student
+rules:
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get","list","create","update","patch","delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get","list","create","update","patch","delete"]
+  - apiGroups: ["route.openshift.io"]
+    resources: ["routes"]
+    verbs: ["get","list","create","update","patch","delete"]

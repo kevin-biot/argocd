@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: java-webapp-run
+  namespace: {{NAMESPACE}}        # <-- your student’s project
+spec:
+  pipelineRef:
+    name: java-webapp-pipeline
+  params:
+    - name: git-url
+      value: https://github.com/kevin-biot/devops-workshop.git
+    - name: git-revision
+      value: main
+    - name: build-name
+      value: java-webapp-build   # matches your Shipwright Build metadata.name
+    - name: namespace
+      value: {{NAMESPACE}}           # target for both Shipwright and deploy
+  workspaces:
+    - name: source
+      persistentVolumeClaim:
+        claimName: shared-pvc   # or whatever your PVC is named
