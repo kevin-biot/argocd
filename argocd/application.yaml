@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: java-webapp-{{NAMESPACE}}
+  namespace: openshift-gitops
+  labels:
+    app: java-webapp
+    student: {{NAMESPACE}}
+spec:
+  project: default
+  source:
+    repoURL: {{GIT_REPO_URL}}
+    targetRevision: {{NAMESPACE}}  # student branch name matches namespace
+    path: k8s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{NAMESPACE}}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false  # namespace should already exist
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+  revisionHistoryLimit: 10

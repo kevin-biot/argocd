@@ -31,11 +31,12 @@ FILES_RENDER_AND_APPLY=(
   # tekton/pvc.yaml              #  ⬅ REMOVED - PVC already created by deploy-students.sh
   tekton/pipeline.yaml
   shipwright/build/build.yaml
+  argocd/application.yaml        #  ⬅ ArgoCD Application for GitOps
 )
 
 # ---------- tekton tasks applied directly (no templating) ----------
 TEKTON_TASKS=(
-  tekton/tasks/deploy.yaml
+  tekton/tasks/update-manifests.yaml  #  ⬅ UPDATED - replaces deploy.yaml for ArgoCD
   tekton/tasks/shipwright-trigger.yaml
 )
 
@@ -51,6 +52,7 @@ for f in "${FILES_RENDER_AND_APPLY[@]}" "${FILES_RENDER_ONLY[@]}"; do
   tgt="$DEST_DIR/$(basename "$f")"
   sed -e "s|{{NAMESPACE}}|$NAMESPACE|g" \
       -e "s|{{GIT_REPO_URL}}|$REPO_URL|g" \
+      -e "s|{{IMAGE_TAG}}|latest|g" \
       "$f" > "$tgt"
   echo "✅ Rendered: $tgt"
 done
@@ -114,5 +116,17 @@ cat <<EOF
         export APP_URL="https://\$(oc get route java-webapp -n $NAMESPACE -o jsonpath='{.spec.host}')"
         echo "App URL: \$APP_URL"
         curl -k \$APP_URL
+
+🎯 ArgoCD GitOps Workflow:
+        # 1. Setup GitHub credentials (run once):
+        ./setup-git-credentials.sh
+        
+        # 2. After running pipeline, check ArgoCD:
+        # ArgoCD UI: https://openshift-gitops-server-openshift-gitops.apps-crc.testing
+        # Your ArgoCD Application: java-webapp-$NAMESPACE
+        
+        # 3. Monitor ArgoCD sync status:
+        oc get application java-webapp-$NAMESPACE -n openshift-gitops
+        oc describe application java-webapp-$NAMESPACE -n openshift-gitops
 
 EOF

@@ -63,16 +63,20 @@ spec:
         - name: NAMESPACE
           value: $(params.namespace)
 
-    - name: deploy
+    - name: update-manifests
       runAfter: [shipwright]
       taskRef:
-        name: deploy
+        name: update-manifests
         kind: Task
       params:
         - name: manifest-path
           value: k8s/deployment.yaml
         - name: namespace
           value: $(params.namespace)
+        - name: image-tag
+          value: $(tasks.clone.results.commit)
+        - name: git-repo-url
+          value: $(params.git-url)
       workspaces:
         - name: source
           workspace: source
