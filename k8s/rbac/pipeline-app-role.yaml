@@ -3,7 +3,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: pipeline-deploy-permissions
-  namespace: {{NAMESPACE}}          # or parameterize per-student
+  namespace: student04          # or parameterize per-student
 rules:
   - apiGroups: [""]
     resources: ["services"]
