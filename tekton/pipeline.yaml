@@ -23,8 +23,8 @@ spec:
   tasks:
     - name: clone
       taskRef:
-      name: git-clone-day3
-      kind: ClusterTask
+        name: git-clone-day3
+        kind: ClusterTask
       params:
         - name: url
           value: $(params.git-url)
