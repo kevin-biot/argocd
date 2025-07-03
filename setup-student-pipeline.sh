@@ -85,14 +85,9 @@ for f in "${ARGOCD_APPLICATION[@]}"; do
   oc apply -n openshift-gitops -f "$DEST_DIR/$(basename "$f")"
 done
 
-echo -e "\n⏳ Waiting for Shipwright Build controller to reconcile..."
-echo "   This prevents race conditions with BuildRun creation"
-until oc get build java-webapp-build -n "$NAMESPACE" -o jsonpath='{.status.registered}' 2>/dev/null | grep -q "True"; do
-  echo "⏳ Still waiting for Build registration and reconciliation..."
-  sleep 2
-done
-echo "✅ Build is fully registered and reconciled in OpenShift"
-echo "🎯 Ready for BuildRun creation - auto-injection should work now!"
+echo -e "\n⏳ Allowing time for Shipwright Build controller to reconcile..."
+sleep 5
+echo "✅ Ready for BuildRun creation!"
 
 # ---------------------- student instructions ----------------------
 cat <<EOF

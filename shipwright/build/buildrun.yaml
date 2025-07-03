@@ -7,4 +7,4 @@ metadata:
 spec:
   build:
     name: java-webapp-build
-  # No need for additional parameters
+  # No explicit parameters - let Shipwright auto-inject after API version fix

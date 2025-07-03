@@ -18,12 +18,12 @@ spec:
         set -e
         echo "🔄 Triggering Shipwright BuildRun for $(params.BUILD_NAME) in namespace $(params.NAMESPACE)"
         cat <<EOF | kubectl create -f -
-        apiVersion: shipwright.io/v1alpha1
+        apiVersion: shipwright.io/v1beta1
         kind: BuildRun
         metadata:
           generateName: $(params.BUILD_NAME)-
           namespace: $(params.NAMESPACE)
         spec:
-          buildRef:
+          build:
             name: $(params.BUILD_NAME)
         EOF
