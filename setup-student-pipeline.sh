@@ -41,7 +41,7 @@ ARGOCD_APPLICATION=(
 # ---------- tekton tasks applied directly (no templating) ----------
 TEKTON_TASKS=(
   tekton/tasks/update-manifests-day3.yaml  #  ⬅ UPDATED - replaces deploy.yaml for ArgoCD
-  # tekton/tasks/shipwright-trigger-day3.yaml removed - students trigger manually like Day 2
+  tekton/tasks/shipwright-trigger-day3.yaml  #  ⬅ DAY 3 VERSION - matches Day 2 pattern
 )
 
 # ---------- cluster tasks applied as admin ----------  
@@ -84,6 +84,15 @@ for f in "${ARGOCD_APPLICATION[@]}"; do
   echo "➡️  Applying $(basename "$f")"
   oc apply -n openshift-gitops -f "$DEST_DIR/$(basename "$f")"
 done
+
+echo -e "\n⏳ Waiting for Shipwright Build controller to reconcile..."
+echo "   This prevents race conditions with BuildRun creation"
+until oc get build java-webapp-build -n "$NAMESPACE" -o jsonpath='{.status.registered}' 2>/dev/null | grep -q "True"; do
+  echo "⏳ Still waiting for Build registration and reconciliation..."
+  sleep 2
+done
+echo "✅ Build is fully registered and reconciled in OpenShift"
+echo "🎯 Ready for BuildRun creation - auto-injection should work now!"
 
 # ---------------------- student instructions ----------------------
 cat <<EOF
