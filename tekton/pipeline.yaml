@@ -23,8 +23,8 @@ spec:
   tasks:
     - name: clone
       taskRef:
-        name: git-clone
-        kind: ClusterTask
+      name: git-clone-day3
+      kind: ClusterTask
       params:
         - name: url
           value: $(params.git-url)
@@ -55,7 +55,7 @@ spec:
     - name: shipwright
       runAfter: [sanity]
       taskRef:
-        name: shipwright-trigger
+        name: shipwright-trigger-day3
         kind: Task
       params:
         - name: BUILD_NAME
@@ -66,7 +66,7 @@ spec:
     - name: update-manifests
       runAfter: [shipwright]
       taskRef:
-        name: update-manifests
+        name: update-manifests-day3
         kind: Task
       params:
         - name: manifest-path

@@ -1,0 +1,54 @@
+apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  name: git-clone-day3
+  labels:
+    tekton.dev/task: "git-clone-day3"
+spec:
+  params:
+    - name: url
+      type: string
+      description: Git repository URL to clone
+    - name: revision
+      type: string
+      description: Git revision (branch, tag, commit)
+      default: "main"
+    - name: deleteExisting
+      type: string
+      description: Delete any existing contents?
+      default: "true"
+  workspaces:
+    - name: source
+      description: Where to clone the repo
+  results:
+    - name: commit
+      description: The precise commit SHA that was cloned
+    - name: url
+      description: The URL that was cloned
+  steps:
+    - name: clone
+      image: alpine/git
+      script: |
+        #!/bin/sh
+        set -e
+
+        if [ "$(params.deleteExisting)" = "true" ]; then
+          echo "🧹 Cleaning out $(workspaces.source.path)"
+          # Remove everything, including hidden dirs/files
+          rm -rf $(workspaces.source.path)/* $(workspaces.source.path)/.[!.]* || true
+        fi
+
+        echo "🔁 Cloning $(params.url) (rev=$(params.revision)) into $(workspaces.source.path)"
+        git clone --single-branch --branch "$(params.revision)" "$(params.url)" "$(workspaces.source.path)"
+        
+        # Get the actual commit SHA that was cloned
+        cd "$(workspaces.source.path)"
+        COMMIT_SHA=$(git rev-parse HEAD)
+        echo "📝 Cloned commit: $COMMIT_SHA"
+        
+        # Write results
+        echo -n "$COMMIT_SHA" > $(results.commit.path)
+        echo -n "$(params.url)" > $(results.url.path)
+        
+        echo "✅ Clone complete, contents:"
+        ls -la "$(workspaces.source.path)"

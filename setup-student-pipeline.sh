@@ -40,8 +40,13 @@ ARGOCD_APPLICATION=(
 
 # ---------- tekton tasks applied directly (no templating) ----------
 TEKTON_TASKS=(
-  tekton/tasks/update-manifests.yaml  #  ⬅ UPDATED - replaces deploy.yaml for ArgoCD
-  tekton/tasks/shipwright-trigger.yaml
+  tekton/tasks/update-manifests-day3.yaml  #  ⬅ UPDATED - replaces deploy.yaml for ArgoCD
+  tekton/tasks/shipwright-trigger-day3.yaml  #  ⬅ DAY 3 VERSION
+)
+
+# ---------- cluster tasks applied as admin ----------  
+CLUSTER_TASKS=(
+  tekton/clustertasks/git-clone-day3.yaml  #  ⬅ DAY 3 VERSION with commit results
 )
 
 # ---------- rendered only (student applies manually) --------------

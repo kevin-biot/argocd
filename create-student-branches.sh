@@ -33,8 +33,10 @@ echo "🚀 Creating and pushing student branches..."
 
 # Create and push all 25 branches
 CREATED_COUNT=0
-for i in {01..25}; do
-    STUDENT_BRANCH="student${i}"
+for i in {1..25}; do
+    # Format with leading zero
+    STUDENT_NUM=$(printf "%02d" $i)
+    STUDENT_BRANCH="student${STUDENT_NUM}"
     echo -n "   Creating $STUDENT_BRANCH... "
     
     # Check if branch already exists locally
