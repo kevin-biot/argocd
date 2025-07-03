@@ -9,8 +9,8 @@ spec:
     type: Git
     contextDir: "."
     git:
-      url: https://github.com/kevin-biot/devops-workshop.git
-      revision: dev
+      url: {{GIT_REPO_URL}}
+      revision: {{NAMESPACE}}
   strategy:
     name: buildah  # Using OpenShift's built-in strategy
     kind: ClusterBuildStrategy
