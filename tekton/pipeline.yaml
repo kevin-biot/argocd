@@ -52,19 +52,8 @@ spec:
         - name: source
           workspace: source
 
-    - name: shipwright
-      runAfter: [sanity]
-      taskRef:
-        name: shipwright-trigger-day3
-        kind: Task
-      params:
-        - name: BUILD_NAME
-          value: $(params.build-name)
-        - name: NAMESPACE
-          value: $(params.namespace)
-
     - name: update-manifests
-      runAfter: [shipwright]
+      runAfter: [sanity]
       taskRef:
         name: update-manifests-day3
         kind: Task

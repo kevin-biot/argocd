@@ -41,7 +41,7 @@ ARGOCD_APPLICATION=(
 # ---------- tekton tasks applied directly (no templating) ----------
 TEKTON_TASKS=(
   tekton/tasks/update-manifests-day3.yaml  #  ⬅ UPDATED - replaces deploy.yaml for ArgoCD
-  tekton/tasks/shipwright-trigger-day3.yaml  #  ⬅ DAY 3 VERSION
+  # tekton/tasks/shipwright-trigger-day3.yaml removed - students trigger manually like Day 2
 )
 
 # ---------- cluster tasks applied as admin ----------  
