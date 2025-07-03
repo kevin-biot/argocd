@@ -15,6 +15,32 @@ spec:
   workspaces:
     - name: source           # repo checked-out by the clone task
   steps:
+  - name: wait-for-build
+    image: bitnami/kubectl:latest
+    script: |
+      #!/bin/bash
+      set -euo pipefail
+      
+      # Handle non-root container docker config issue
+      if [ ! -w /home ]; then
+        echo "⚠️ Warning: Non-root container detected, docker config may be limited"
+        export HOME=/tmp
+        mkdir -p /tmp/.docker || true
+      fi
+      echo "⏳ Waiting for Shipwright BuildRun to complete..."
+      
+      # Find the most recent buildrun for this namespace
+      BUILD_RUN_NAME=$(kubectl get buildrun -n $(params.namespace) --sort-by=.metadata.creationTimestamp -o jsonpath='{.items[-1].metadata.name}')
+      echo "📋 Monitoring BuildRun: $BUILD_RUN_NAME"
+      
+      # Wait for completion with timeout
+      kubectl wait --for=condition=Succeeded buildrun/${BUILD_RUN_NAME} -n $(params.namespace) --timeout=10m
+      echo "✅ Shipwright BuildRun completed successfully"
+      
+      # Verify the image was created
+      echo "🔍 Verifying image was pushed..."
+      sleep 5  # Allow time for image to be available
+      
   - name: retag-and-update
     image: bitnami/kubectl:latest
     workingDir: $(workspaces.source.path)
@@ -24,9 +50,14 @@ spec:
           secretKeyRef:
             name: git-credentials
             key: token
+      - name: HOME
+        value: /tmp
     script: |
       #!/bin/bash
       set -euo pipefail
+      
+      # Handle non-root container docker config issue
+      mkdir -p /tmp/.docker || true
       
       COMMIT_SHA="$(params.image-tag)"
       NAMESPACE="$(params.namespace)"
