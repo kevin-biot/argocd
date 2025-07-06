@@ -12,13 +12,16 @@ spec:
       description: Storage driver (vfs/overlay)
       default: vfs
       type: string
+    - name: shp-source-context
+      description: The absolute path to the context directory (injected by Shipwright)
+      type: string
     - name: shp-output-image
-      description: Fully qualified image name to push (injected automatically by Shipwright from Build.output.image)
+      description: The URL of the image to push (injected by Shipwright)
       type: string
   buildSteps:
     - name: build-and-push
       image: quay.io/containers/buildah:v1.39.3
-      workingDir: $(params.shp-source-root)
+      workingDir: /workspace/source
       securityContext:
         privileged: true
       command:
@@ -27,7 +30,32 @@ spec:
         - -c
         - |
           set -e
-          echo "Building image..."
-          buildah --storage-driver=$(params.storage-driver) bud -f $(params.dockerfile) -t $(params.shp-output-image)
-          echo "Pushing image..."
-          buildah --storage-driver=$(params.storage-driver) push $(params.shp-output-image) docker://$(params.shp-output-image)
+          
+          # Use Shipwright v1beta1 system parameters
+          SOURCE_CONTEXT="$(params.shp-source-context)"
+          OUTPUT_IMAGE="$(params.shp-output-image)"
+          
+          echo "🏗️  Building image from context: ${SOURCE_CONTEXT}"
+          echo "📦  Output image: ${OUTPUT_IMAGE}"
+          
+          # Change to the source context directory
+          cd "${SOURCE_CONTEXT}"
+          
+          # Verify Dockerfile exists
+          if [ ! -f "$(params.dockerfile)" ]; then
+            echo "❌ Dockerfile not found: $(params.dockerfile)"
+            exit 1
+          fi
+          
+          echo "🔨 Building image..."
+          buildah --storage-driver=$(params.storage-driver) bud \
+            -f $(params.dockerfile) \
+            -t "${OUTPUT_IMAGE}" \
+            .
+          
+          echo "🚀 Pushing image..."
+          buildah --storage-driver=$(params.storage-driver) push \
+            "${OUTPUT_IMAGE}" \
+            "docker://${OUTPUT_IMAGE}"
+          
+          echo "✅ Build and push completed successfully"
