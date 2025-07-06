@@ -4,58 +4,43 @@ metadata:
   name: buildah-shipwright-managed-push
 spec:
   parameters:
+    # User-defined parameters (provided by Build spec)
     - name: dockerfile
       description: Dockerfile path
-      default: Dockerfile
       type: string
+      default: Dockerfile
     - name: storage-driver
       description: Storage driver (vfs/overlay)
+      type: string
       default: vfs
+    
+    # Shipwright v1beta1 system parameters - MUST be explicitly declared
+    # These are auto-injected by Shipwright at runtime but require declaration
+    - name: shp-source-root
+      description: "[SYSTEM] Absolute path to the directory that contains the user's sources (auto-injected by Shipwright)"
       type: string
     - name: shp-source-context
-      description: The absolute path to the context directory (injected by Shipwright)
+      description: "[SYSTEM] Absolute path to the context directory (auto-injected by Shipwright)"
       type: string
     - name: shp-output-image
-      description: The URL of the image to push (injected by Shipwright)
+      description: "[SYSTEM] URL of the image to push from Build.spec.output.image (auto-injected by Shipwright)"
       type: string
+      
   buildSteps:
     - name: build-and-push
       image: quay.io/containers/buildah:v1.39.3
-      workingDir: /workspace/source
+      # Use shp-source-root as workingDir (safe for container startup)
+      # Note: shp-source-context might not exist at container start per docs
+      workingDir: $(params.shp-source-root)
       securityContext:
         privileged: true
-      command:
-        - /bin/bash
+      command: ["/bin/bash"]
       args:
         - -c
         - |
           set -e
-          
-          # Use Shipwright v1beta1 system parameters
-          SOURCE_CONTEXT="$(params.shp-source-context)"
-          OUTPUT_IMAGE="$(params.shp-output-image)"
-          
-          echo "🏗️  Building image from context: ${SOURCE_CONTEXT}"
-          echo "📦  Output image: ${OUTPUT_IMAGE}"
-          
-          # Change to the source context directory
-          cd "${SOURCE_CONTEXT}"
-          
-          # Verify Dockerfile exists
-          if [ ! -f "$(params.dockerfile)" ]; then
-            echo "❌ Dockerfile not found: $(params.dockerfile)"
-            exit 1
-          fi
-          
-          echo "🔨 Building image..."
-          buildah --storage-driver=$(params.storage-driver) bud \
-            -f $(params.dockerfile) \
-            -t "${OUTPUT_IMAGE}" \
-            .
-          
-          echo "🚀 Pushing image..."
-          buildah --storage-driver=$(params.storage-driver) push \
-            "${OUTPUT_IMAGE}" \
-            "docker://${OUTPUT_IMAGE}"
-          
-          echo "✅ Build and push completed successfully"
+          echo "Building image..."
+          # Use user-defined parameters and system-injected output image
+          buildah --storage-driver=$(params.storage-driver) bud -f $(params.dockerfile) -t $(params.shp-output-image) .
+          echo "Pushing image..."
+          buildah --storage-driver=$(params.storage-driver) push $(params.shp-output-image) docker://$(params.shp-output-image)
