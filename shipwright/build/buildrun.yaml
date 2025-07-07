@@ -1,10 +1,10 @@
 # buildrun.yaml
-apiVersion: shipwright.io/v1beta1
+apiVersion: shipwright.io/v1alpha1
 kind: BuildRun
 metadata:
   name: java-webapp-buildrun
   namespace: {{NAMESPACE}}
 spec:
-  build:
+  buildRef:
     name: java-webapp-build
-  # No explicit parameters - let Shipwright auto-inject after API version fix
+  # Match Day 2 working pattern exactly
