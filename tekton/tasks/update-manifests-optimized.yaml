@@ -100,10 +100,10 @@ spec:
       
       echo "📝 Updating $(params.manifest-path) with new image tag"
       # Update deployment.yaml with full image path including new tag
-      yq e ".spec.template.spec.containers[0].image = \"${TARGET_IMAGE}\"" -i "$(params.manifest-path)"
+      sed -i "s|image:.*|image: \"${TARGET_IMAGE}\"|" "$(params.manifest-path)"
       
       echo "✅ Updated deployment manifest:"
-      yq e '.spec.template.spec.containers[0].image' "$(params.manifest-path)"
+      grep "image:" "$(params.manifest-path)"
       
       echo "📤 Committing and pushing changes"
       git config --global user.name "Tekton Pipeline"
