@@ -24,22 +24,22 @@ oc delete clusterbuildstrategy buildah-shipwright-managed-push --ignore-not-foun
 echo "🚨 Deleting ArgoCD Applications in openshift-gitops..."
 oc delete application --all -n openshift-gitops --ignore-not-found || true
 
-# Apply Day 3 ClusterTasks
-echo "🚀 Applying Day 3 ClusterTasks..."
-oc apply -f tekton/clustertasks/git-clone-day3.yaml
-oc apply -f tekton/clustertasks/maven-build.yaml
-oc apply -f tekton/clustertasks/war-sanity-check.yaml
+# Apply Day 3 Optimized ClusterTasks
+echo "🚀 Applying Day 3 Optimized ClusterTasks..."
+oc apply -f tekton/clustertasks/git-clone-optimized.yaml
+oc apply -f tekton/clustertasks/maven-build-optimized.yaml
+oc apply -f tekton/clustertasks/war-sanity-check-optimized.yaml
 
-# Apply Day 3 ClusterBuildStrategies
-echo "🚀 Applying Day 3 ClusterBuildStrategies..."
-oc apply -f shipwright/buildstrategies/buildah-shipwright-managed-push.yaml
+# Apply Day 3 Beta ClusterBuildStrategies
+echo "🚀 Applying Day 3 Beta ClusterBuildStrategies..."
+oc apply -f shipwright/buildstrategies/buildah-course-beta.yaml
 
 # Verify Day 3 resources are ready
-echo "✅ Verifying Day 3 ClusterTasks:"
-oc get clustertask | grep -E 'git-clone-day3|maven-build|war-sanity-check'
+echo "✅ Verifying Day 3 Optimized ClusterTasks:"
+oc get clustertask | grep -E 'git-clone-optimized|maven-build-optimized|war-sanity-check-optimized'
 
-echo "✅ Verifying Day 3 ClusterBuildStrategies:"
-oc get clusterbuildstrategy
+echo "✅ Verifying Day 3 Beta ClusterBuildStrategies:"
+oc get clusterbuildstrategy buildah-course-beta
 
 echo "✅ Verifying student namespaces:"
 oc get ns | grep '^student'
