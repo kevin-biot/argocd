@@ -25,7 +25,6 @@ mkdir -p "$DEST_DIR"
 INFRASTRUCTURE_FILES=(
   k8s/rbac/pipeline-app-role.yaml
   k8s/rbac/pipeline-app-binding.yaml
-  k8s/java-webapp-imagestream.yaml
   tekton/pipeline-optimized.yaml
   shipwright/build/build-beta.yaml
 )
@@ -67,6 +66,20 @@ for f in "${ALL_RENDER_FILES[@]}"; do
 done
 
 echo -e "\n🚀 Applying infrastructure resources:"
+
+# Create ImageStream first (infrastructure)
+echo "➡️  Creating ImageStream for namespace: $NAMESPACE"
+cat << EOF | oc apply -n "$NAMESPACE" -f -
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: java-webapp
+  namespace: $NAMESPACE
+spec:
+  lookupPolicy:
+    local: false
+EOF
+
 for f in "${INFRASTRUCTURE_FILES[@]}"; do
   base_file=$(basename "$f")
   echo "➡️  Applying $base_file to namespace: $NAMESPACE"
