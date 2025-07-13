@@ -8,11 +8,11 @@ spec:
     name: java-webapp-pipeline-optimized
   params:
     - name: git-url
-      value: https://github.com/kevin-biot/devops-workshop.git
+      value: {{GIT_REPO_URL}}
     - name: git-revision
       value: main
     - name: build-name
-      value: java-webapp-build   # matches your Shipwright Build metadata.name
+      value: java-webapp-build-beta   # matches your Shipwright Build metadata.name
     - name: namespace
       value: {{NAMESPACE}}           # target for both Shipwright and deploy
   workspaces:
