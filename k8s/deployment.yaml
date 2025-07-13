@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: java-webapp
-  namespace: {{NAMESPACE}}
+  namespace: student01
   labels:
     app: java-webapp
 spec:
@@ -18,7 +18,7 @@ spec:
       containers:
         - name: java-webapp
           # student’s namespace/project will be set at apply time
-          image: image-registry.openshift-image-registry.svc:5000/{{NAMESPACE}}/java-webapp:{{IMAGE_TAG}}
+          image: image-registry.openshift-image-registry.svc:5000/student01/java-webapp:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
