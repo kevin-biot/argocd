@@ -1,0 +1,49 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: shipwright-trigger-beta
+spec:
+  description: Shipwright v1beta1 build trigger with resource optimization
+  params:
+    - name: BUILD_NAME
+      type: string
+      description: Name of the Shipwright Build resource
+    - name: NAMESPACE
+      type: string
+      description: Namespace containing the Build resource
+  steps:
+    - name: trigger-build
+      image: bitnami/kubectl:latest
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
+      script: |
+        #!/bin/bash
+        set -euo pipefail
+        
+        BUILD_NAME="$(params.BUILD_NAME)"
+        NAMESPACE="$(params.NAMESPACE)"
+        
+        echo "🚀 Triggering Shipwright v1beta1 build: ${BUILD_NAME} in namespace: ${NAMESPACE}"
+        
+        # Create a BuildRun with timestamp to avoid conflicts
+        TIMESTAMP=$(date +%s)
+        BUILDRUN_NAME="${BUILD_NAME}-beta-${TIMESTAMP}"
+        
+        cat <<EOF | kubectl apply -f -
+        apiVersion: shipwright.io/v1beta1
+        kind: BuildRun
+        metadata:
+          name: ${BUILDRUN_NAME}
+          namespace: ${NAMESPACE}
+        spec:
+          buildRef:
+            name: ${BUILD_NAME}
+        EOF
+        
+        echo "✅ Created v1beta1 BuildRun: ${BUILDRUN_NAME}"
+        echo "📋 Monitor with: oc get buildrun ${BUILDRUN_NAME} -n ${NAMESPACE}"

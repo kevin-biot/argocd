@@ -1,0 +1,75 @@
+apiVersion: shipwright.io/v1beta1
+kind: ClusterBuildStrategy
+metadata:
+  name: buildah-course-beta
+spec:
+  parameters:
+  # User-defined parameters
+  - name: dockerfile
+    description: Dockerfile path
+    type: string
+    default: "Dockerfile"
+  - name: storage-driver
+    description: Storage driver
+    type: string
+    default: "vfs"
+  # System parameters - EXPLICITLY declared for v1beta1
+  - name: shp-source-root
+    description: "[SYSTEM] Source root directory (auto-injected)"
+    type: string
+  - name: shp-source-context
+    description: "[SYSTEM] Source context directory (auto-injected)"
+    type: string  
+  - name: shp-output-image
+    description: "[SYSTEM] Output image URL (auto-injected)"
+    type: string
+  buildSteps:
+  - name: build-and-push
+    image: quay.io/containers/buildah:v1.39.3
+    # CRITICAL: Use shp-source-root as workingDir (always available)
+    workingDir: $(params.shp-source-root)
+    securityContext:
+      privileged: true
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+    command: ["/bin/bash"]
+    args:
+    - -c
+    - |
+      set -euo pipefail
+      
+      echo "🚀 Shipwright v1beta1 Build with System Parameters"
+      echo "📍 Source Root: $(params.shp-source-root)"
+      echo "📍 Source Context: $(params.shp-source-context)"
+      echo "📍 Output Image: $(params.shp-output-image)"
+      echo "📍 Dockerfile: $(params.dockerfile)"
+      echo "📍 Storage Driver: $(params.storage-driver)"
+      
+      # Navigate to source context (where Dockerfile should be)
+      cd "$(params.shp-source-context)"
+      
+      # Verify Dockerfile exists
+      if [ ! -f "$(params.dockerfile)" ]; then
+        echo "❌ Dockerfile not found: $(params.dockerfile)"
+        echo "📂 Available files:"
+        ls -la
+        exit 1
+      fi
+      
+      echo "🔨 Building image..."
+      buildah --storage-driver=$(params.storage-driver) bud \
+        -f "$(params.dockerfile)" \
+        -t "$(params.shp-output-image)" \
+        .
+      
+      echo "🚀 Pushing image..."
+      buildah --storage-driver=$(params.storage-driver) push \
+        "$(params.shp-output-image)" \
+        "docker://$(params.shp-output-image)"
+      
+      echo "✅ Build and push completed successfully"

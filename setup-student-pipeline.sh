@@ -27,7 +27,7 @@ INFRASTRUCTURE_FILES=(
   k8s/rbac/pipeline-app-binding.yaml
   k8s/java-webapp-imagestream.yaml
   tekton/pipeline-optimized.yaml
-  shipwright/build/build.yaml
+  shipwright/build/build-beta.yaml
 )
 
 # ---------- GitOps resources (applied by script) ----------
@@ -37,8 +37,8 @@ GITOPS_FILES=(
 
 # ---------- Tekton tasks (applied directly, no templating) ----------
 TEKTON_TASKS=(
-  tekton/tasks/update-manifests-day3.yaml
-  tekton/tasks/shipwright-trigger-day3.yaml
+  tekton/tasks/update-manifests-optimized.yaml
+  tekton/tasks/shipwright-trigger-beta.yaml
 )
 
 # ---------- Application resources (rendered only - ArgoCD manages) ----------
@@ -51,7 +51,7 @@ APP_FILES_RENDER_ONLY=(
 # ---------- Pipeline execution files (rendered only - student triggers) ----------
 PIPELINE_FILES_RENDER_ONLY=(
   tekton/pvc.yaml
-  shipwright/build/buildrun.yaml
+  shipwright/build/buildrun-beta.yaml
   tekton/pipeline-run.yaml
 )
 
@@ -101,10 +101,11 @@ cat <<EOF
 📂 Rendered files are in: $DEST_DIR
 
 📋 What was created:
-   ✅ Infrastructure: RBAC, ImageStream, Optimized Pipeline, Build
+   ✅ Infrastructure: RBAC, ImageStream, Optimized Pipeline, Beta Build
    ✅ ArgoCD Application: java-webapp-$NAMESPACE  
-   ✅ Tekton Tasks: update-manifests-day3, shipwright-trigger-day3
-   ✅ Resource Optimized: 550m CPU total (fits in student quota)
+   ✅ Tekton Tasks: update-manifests-optimized, shipwright-trigger-beta
+   ✅ Resource Optimized: 1000m CPU total (fits in student quota)
+   ✅ Shipwright Beta API: v1beta1 with system parameter auto-injection
 
 📋 What ArgoCD will create:
    🎯 Deployment, Service, Route (managed by GitOps)

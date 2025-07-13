@@ -1,0 +1,24 @@
+# build-beta.yaml - Clean v1beta1 implementation
+apiVersion: shipwright.io/v1beta1
+kind: Build
+metadata:
+  name: java-webapp-build-beta
+  namespace: {{NAMESPACE}}
+spec:
+  source:
+    type: Git
+    git:
+      url: {{GIT_REPO_URL}}
+      revision: {{NAMESPACE}}
+  strategy:
+    name: buildah-course-beta
+    kind: ClusterBuildStrategy
+  output:
+    image: image-registry.openshift-image-registry.svc:5000/{{NAMESPACE}}/java-webapp:latest
+  # Only specify user-defined parameters
+  # System parameters (shp-*) are auto-injected by Shipwright
+  paramValues:
+    - name: dockerfile
+      value: Dockerfile
+    - name: storage-driver
+      value: vfs
