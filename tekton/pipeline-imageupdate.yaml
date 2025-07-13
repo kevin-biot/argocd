@@ -1,0 +1,81 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: java-webapp-pipeline-imageupdate
+spec:
+  description: Simplified pipeline using ArgoCD Image Updater for GitOps
+  params:
+    - name: git-url
+      type: string
+      description: Public Git repo URL
+    - name: git-revision
+      type: string
+      description: Branch, tag or commit
+      default: "dev"
+    - name: build-name
+      type: string
+      description: Shipwright Build name
+    - name: namespace
+      type: string
+      description: Target OpenShift project
+  workspaces:
+    - name: source
+      description: Where source is checked out
+  tasks:
+    - name: clone
+      taskRef:
+        name: git-clone-optimized
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.git-url)
+        - name: revision
+          value: $(params.git-revision)
+      workspaces:
+        - name: source
+          workspace: source
+
+    - name: build
+      runAfter: [clone]
+      taskRef:
+        name: maven-build-optimized
+        kind: ClusterTask
+      workspaces:
+        - name: source
+          workspace: source
+
+    - name: sanity
+      runAfter: [build]
+      taskRef:
+        name: war-sanity-check-optimized
+        kind: ClusterTask
+      workspaces:
+        - name: source
+          workspace: source
+
+    - name: shipwright
+      runAfter: [sanity]
+      taskRef:
+        name: shipwright-trigger-beta
+        kind: Task
+      params:
+        - name: BUILD_NAME
+          value: $(params.build-name)
+        - name: NAMESPACE
+          value: $(params.namespace)
+
+    - name: notify-complete
+      runAfter: [shipwright]
+      taskRef:
+        name: openshift-client
+        kind: ClusterTask
+      params:
+        - name: SCRIPT
+          value: |
+            echo "🎉 Build completed successfully!"
+            echo "📦 Image pushed to: image-registry.openshift-image-registry.svc:5000/$(params.namespace)/java-webapp:latest"
+            echo "🔄 ArgoCD Image Updater will automatically detect the new image and update the deployment"
+            echo "🎯 Check ArgoCD UI to monitor the automatic deployment sync"
+            
+            # Verify the image was created
+            oc get istag java-webapp:latest -n $(params.namespace) || echo "⚠️ ImageStreamTag not found"

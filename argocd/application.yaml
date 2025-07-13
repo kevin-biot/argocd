@@ -6,6 +6,13 @@ metadata:
   labels:
     app: java-webapp
     student: {{NAMESPACE}}
+  annotations:
+    # ArgoCD Image Updater configuration
+    argocd-image-updater.argoproj.io/image-list: webapp=image-registry.openshift-image-registry.svc:5000/{{NAMESPACE}}/java-webapp:latest
+    argocd-image-updater.argoproj.io/webapp.update-strategy: latest
+    argocd-image-updater.argoproj.io/write-back-method: git
+    argocd-image-updater.argoproj.io/git-branch: {{NAMESPACE}}
+    argocd-image-updater.argoproj.io/git-repository: {{GIT_REPO_URL}}
 spec:
   project: default
   source:

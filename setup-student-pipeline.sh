@@ -26,7 +26,7 @@ INFRASTRUCTURE_FILES=(
   k8s/rbac/pipeline-app-role.yaml
   k8s/rbac/pipeline-app-binding.yaml
   k8s/java-webapp-imagestream.yaml
-  tekton/pipeline-optimized.yaml
+  tekton/pipeline-imageupdate.yaml
   shipwright/build/build-beta.yaml
 )
 
@@ -37,7 +37,6 @@ GITOPS_FILES=(
 
 # ---------- Tekton tasks (applied directly, no templating) ----------
 TEKTON_TASKS=(
-  tekton/tasks/update-manifests-optimized.yaml
   tekton/tasks/shipwright-trigger-beta.yaml
 )
 

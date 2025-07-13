@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: java-webapp-imageupdate-
+  namespace: {{NAMESPACE}}
+spec:
+  pipelineRef:
+    name: java-webapp-pipeline-imageupdate
+  params:
+    - name: git-url
+      value: {{GIT_REPO_URL}}
+    - name: git-revision
+      value: {{NAMESPACE}}
+    - name: build-name
+      value: java-webapp-build-beta
+    - name: namespace
+      value: {{NAMESPACE}}
+  workspaces:
+    - name: source
+      persistentVolumeClaim:
+        claimName: shared-pvc
