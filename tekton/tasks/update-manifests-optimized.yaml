@@ -96,7 +96,7 @@ spec:
       
       echo "✅ Source image found, proceeding with retag"
       echo "🏷️  Retagging image: latest → ${COMMIT_SHA}"
-      kubectl tag ${SOURCE_IMAGE} ${TARGET_IMAGE}
+      oc tag ${SOURCE_IMAGE} ${TARGET_IMAGE}
       
       echo "📝 Updating $(params.manifest-path) with new image tag"
       # Update deployment.yaml with full image path including new tag
