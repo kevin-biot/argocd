@@ -15,10 +15,13 @@ spec:
     kind: ClusterBuildStrategy
   output:
     image: image-registry.openshift-image-registry.svc:5000/{{NAMESPACE}}/java-webapp:latest
-  # Only specify user-defined parameters
-  # System parameters (shp-*) are auto-injected by Shipwright
+  # Explicit parameters - no reliance on broken auto-injection
   paramValues:
     - name: dockerfile
       value: Dockerfile
     - name: storage-driver
       value: vfs
+    - name: source-context
+      value: "."
+    - name: output-image
+      value: image-registry.openshift-image-registry.svc:5000/{{NAMESPACE}}/java-webapp:latest
