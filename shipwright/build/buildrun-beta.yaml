@@ -5,7 +5,7 @@ metadata:
   name: java-webapp-buildrun-beta
   namespace: {{NAMESPACE}}
 spec:
-  buildRef:
+  build:
     name: java-webapp-build-beta
   # No paramValues needed - system parameters auto-injected
   # User parameters inherited from Build spec
