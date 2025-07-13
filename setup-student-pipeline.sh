@@ -26,7 +26,7 @@ INFRASTRUCTURE_FILES=(
   k8s/rbac/pipeline-app-role.yaml
   k8s/rbac/pipeline-app-binding.yaml
   k8s/java-webapp-imagestream.yaml
-  tekton/pipeline-imageupdate.yaml
+  tekton/pipeline-optimized.yaml
   shipwright/build/build-beta.yaml
 )
 

@@ -3,7 +3,7 @@ kind: Pipeline
 metadata:
   name: java-webapp-pipeline-optimized
 spec:
-  description: Optimized pipeline for course environment with resource limits
+  description: Simplified pipeline using ArgoCD Image Updater for GitOps
   params:
     - name: git-url
       type: string
@@ -64,20 +64,18 @@ spec:
         - name: NAMESPACE
           value: $(params.namespace)
 
-    - name: update-manifests
+    - name: notify-complete
       runAfter: [shipwright]
       taskRef:
-        name: update-manifests-optimized
-        kind: Task
+        name: openshift-client
+        kind: ClusterTask
       params:
-        - name: manifest-path
-          value: k8s/deployment.yaml
-        - name: namespace
-          value: $(params.namespace)
-        - name: image-tag
-          value: $(tasks.clone.results.commit)
-        - name: git-repo-url
-          value: $(params.git-url)
-      workspaces:
-        - name: source
-          workspace: source
+        - name: SCRIPT
+          value: |
+            echo "🎉 Build completed successfully!"
+            echo "📦 Image pushed to: image-registry.openshift-image-registry.svc:5000/$(params.namespace)/java-webapp:latest"
+            echo "🔄 ArgoCD Image Updater will automatically detect the new image and update the deployment"
+            echo "🎯 Check ArgoCD UI to monitor the automatic deployment sync"
+            
+            # Verify the image was created
+            oc get istag java-webapp:latest -n $(params.namespace) || echo "⚠️ ImageStreamTag not found"
