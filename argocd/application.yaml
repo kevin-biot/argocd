@@ -19,6 +19,8 @@ spec:
     repoURL: {{GIT_REPO_URL}}
     targetRevision: {{NAMESPACE}}  # student branch name matches namespace
     path: k8s
+    directory:
+      include: '{deployment.yaml,service.yaml,route.yaml}'
   destination:
     server: https://kubernetes.default.svc
     namespace: {{NAMESPACE}}
