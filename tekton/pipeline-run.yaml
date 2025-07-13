@@ -5,7 +5,7 @@ metadata:
   namespace: {{NAMESPACE}}        # <-- your student’s project
 spec:
   pipelineRef:
-    name: java-webapp-pipeline
+    name: java-webapp-pipeline-optimized
   params:
     - name: git-url
       value: https://github.com/kevin-biot/devops-workshop.git
