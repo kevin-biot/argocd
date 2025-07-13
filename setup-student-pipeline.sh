@@ -121,7 +121,7 @@ cat <<EOF
         
   3.  Trigger a Shipwright build (re-run safe):
         oc delete buildrun --all -n $NAMESPACE --ignore-not-found
-        oc create -f buildrun.yaml -n $NAMESPACE
+        oc create -f buildrun-beta.yaml -n $NAMESPACE
 
   4.  Kick off the full pipeline (re-run safe):
         oc delete pipelinerun --all -n $NAMESPACE --ignore-not-found
