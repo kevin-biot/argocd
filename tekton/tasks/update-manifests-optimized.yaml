@@ -64,7 +64,7 @@ spec:
       echo "🎯 Image verification complete - proceeding to retag step"
       
   - name: retag-and-update
-    image: bitnami/kubectl:latest
+    image: quay.io/openshift/origin-cli:latest
     workingDir: $(workspaces.source.path)
     env:
       - name: GITHUB_TOKEN
