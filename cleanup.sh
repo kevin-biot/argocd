@@ -1,80 +1,65 @@
 #!/bin/bash
 # ------------------------------------------------------------------
-# Day 3 Admin Cleanup and Bootstrap Script (Full Namespace Cleanup)
-# Cleans up all Day 2 artifacts and prepares cluster for Day 3.
+# Day 3 Student Cleanup Script
+# Cleans only resources students have permissions to delete
 # ------------------------------------------------------------------
 
 set -euo pipefail
 
-echo "🚨 Deleting all ClusterTasks..."
-oc delete clustertask --all --ignore-not-found || true
+# Get the current user's namespace (assumes student01, student02, etc.)
+STUDENT_NS=$(oc whoami | sed 's/system:serviceaccount://g' | cut -d':' -f1)
 
-echo "🚨 Deleting Day 2 Shipwright ClusterBuildStrategies..."
-oc delete clusterbuildstrategy buildah-shipwright-managed-push --ignore-not-found || true
+echo "🧹 Cleaning Day 2 resources in namespace: $STUDENT_NS"
 
-echo "🚨 Deleting all ArgoCD Applications in openshift-gitops..."
-oc delete application --all -n openshift-gitops --ignore-not-found || true
+# Delete Tekton Pipelines and PipelineRuns
+echo "🗑 Deleting Tekton pipelines and runs..."
+oc delete pipelinerun --all -n $STUDENT_NS --ignore-not-found || true
+oc delete pipeline java-webapp-pipeline -n $STUDENT_NS --ignore-not-found || true
 
-echo "🗑 Cleaning all Day 2 resources in student namespaces..."
-for ns in $(oc get ns --no-headers | awk '/^student/ {print $1}'); do
-  echo "🧹 Namespace: $ns"
+# Delete Tekton Tasks (Day 2 namespaced tasks only)
+echo "🗑 Deleting Day 2 Tekton tasks..."
+oc delete task shipwright-trigger -n $STUDENT_NS --ignore-not-found || true
+oc delete task update-manifests -n $STUDENT_NS --ignore-not-found || true
 
-  # Delete Tekton pipelines
-  oc delete pipeline java-webapp-pipeline -n $ns --ignore-not-found || true
+# Delete Shipwright Builds and BuildRuns
+echo "🗑 Deleting Shipwright builds..."
+oc delete buildrun --all -n $STUDENT_NS --ignore-not-found || true
+oc delete build java-webapp-build -n $STUDENT_NS --ignore-not-found || true
 
-  # Delete Tekton Tasks (Day 2 only)
-  oc delete task shipwright-trigger -n $ns --ignore-not-found || true
-  oc delete task update-manifests -n $ns --ignore-not-found || true
+# Delete Java webapp resources
+echo "🗑 Deleting Java webapp resources..."
+oc delete deployment java-webapp -n $STUDENT_NS --ignore-not-found || true
+oc delete svc java-webapp -n $STUDENT_NS --ignore-not-found || true
+oc delete route java-webapp -n $STUDENT_NS --ignore-not-found || true
+oc delete imagestream java-webapp -n $STUDENT_NS --ignore-not-found || true
 
-  # Delete Shipwright builds
-  oc delete build java-webapp-build -n $ns --ignore-not-found || true
+# Delete RBAC bindings (if students created them)
+echo "🗑 Deleting RBAC resources..."
+oc delete role pipeline-app-role -n $STUDENT_NS --ignore-not-found || true
+oc delete rolebinding pipeline-app-binding -n $STUDENT_NS --ignore-not-found || true
 
-  # Delete Java webapp resources
-  oc delete imagestream java-webapp -n $ns --ignore-not-found || true
-  oc delete deployment java-webapp -n $ns --ignore-not-found || true
-  oc delete service java-webapp -n $ns --ignore-not-found || true
-  oc delete route java-webapp -n $ns --ignore-not-found || true
+# Delete any ConfigMaps or Secrets created for the pipeline
+echo "🗑 Deleting pipeline configs..."
+oc delete configmap --selector=app=java-webapp -n $STUDENT_NS --ignore-not-found || true
+oc delete secret --selector=app=java-webapp -n $STUDENT_NS --ignore-not-found || true
 
-  # Delete RBAC bindings
-  oc delete role pipeline-app-role -n $ns --ignore-not-found || true
-  oc delete rolebinding pipeline-app-binding -n $ns --ignore-not-found || true
+echo "🔍 Verifying cleanup in namespace $STUDENT_NS..."
 
-done
-
-echo "🔍 Verifying cleanup..."
-echo "🔍 Checking for leftover ClusterTasks..."
-oc get clustertask || echo "✅ No ClusterTasks found."
-
-echo "🔍 Checking for leftover ClusterBuildStrategies..."
-oc get clusterbuildstrategy || echo "✅ No ClusterBuildStrategies found."
-
-echo "🔍 Checking for leftover ArgoCD Applications..."
-oc get application -n openshift-gitops || echo "✅ No ArgoCD Applications found."
-
-echo "🔍 Checking for leftover Java deployments..."
-oc get deployment -A | grep java-webapp || echo "✅ No java-webapp deployments found."
-
+# Check what's left (students can only see their own namespace)
 echo "🔍 Checking for leftover pipelines..."
-oc get pipeline -A | grep java-webapp-pipeline || echo "✅ No pipelines found."
+oc get pipeline -n $STUDENT_NS | grep java-webapp || echo "✅ No java-webapp pipelines found."
 
-echo "🚀 Applying Day 3 ClusterTasks from tekton/clustertasks/..."
-oc apply -f tekton/clustertasks/git-clone-day3.yaml
-oc apply -f tekton/clustertasks/maven-build.yaml
-oc apply -f tekton/clustertasks/war-sanity-check.yaml
-oc apply -f tekton/tasks/shipwright-trigger-day3.yaml
-oc apply -f tekton/tasks/update-manifests-day3.yaml
+echo "🔍 Checking for leftover builds..."
+oc get build -n $STUDENT_NS | grep java-webapp || echo "✅ No java-webapp builds found."
 
-echo "🚀 Applying Day 3 Shipwright ClusterBuildStrategy..."
-oc apply -f shipwright/buildstrategies/buildah-shipwright-managed-push.yaml
+echo "🔍 Checking for leftover deployments..."
+oc get deployment -n $STUDENT_NS | grep java-webapp || echo "✅ No java-webapp deployments found."
 
-echo "✅ Day 3 ClusterTasks:"
-oc get clustertask | grep -E 'git-clone|maven|sanity|shipwright|update'
+echo "🔍 Checking for leftover services..."
+oc get svc -n $STUDENT_NS | grep java-webapp || echo "✅ No java-webapp services found."
 
-echo "✅ Day 3 ClusterBuildStrategies:"
-oc get clusterbuildstrategy
+echo "🔍 Checking for leftover routes..."
+oc get route -n $STUDENT_NS | grep java-webapp || echo "✅ No java-webapp routes found."
 
-echo "✅ Student namespaces:"
-oc get ns | grep '^student'
-
-echo "🎯 Cluster is now fully reset and ready for Day 3 student setup scripts."
-
+echo "✅ Namespace $STUDENT_NS is clean and ready for Day 3 exercises."
+echo "🎯 Instructor will apply Day 3 ClusterTasks before you run your setup script."
