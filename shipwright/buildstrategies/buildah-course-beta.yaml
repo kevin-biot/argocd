@@ -1,63 +1,62 @@
+---
 apiVersion: shipwright.io/v1beta1
 kind: ClusterBuildStrategy
 metadata:
   name: buildah-course-beta
 spec:
   parameters:
-  # User-defined parameters
-  - name: dockerfile
-    description: Dockerfile path
-    type: string
-    default: "Dockerfile"
-  - name: storage-driver
-    description: Storage driver
-    type: string
-    default: "vfs"
-  # Explicit parameters instead of broken auto-injection
-  - name: source-context
-    description: Source context directory
-    type: string
-    default: "."
-  - name: output-image
-    description: Output image URL
-    type: string
-  buildSteps:
-  - name: build-and-push
-    image: quay.io/containers/buildah:v1.39.3
-    workingDir: /workspace/source
-    securityContext:
-      privileged: true
-    command: ["/bin/bash"]
-    args:
-    - -c
-    - |
-      set -euo pipefail
-      
-      echo "🚀 Shipwright Build with Explicit Parameters (WORKING)"
-      echo "📍 Context: $(params.source-context)"
-      echo "📍 Output Image: $(params.output-image)"
-      echo "📍 Dockerfile: $(params.dockerfile)"
-      echo "📍 Storage Driver: $(params.storage-driver)"
-      
-      # Navigate to source context
-      cd "$(params.source-context)"
-      
-      # Verify Dockerfile exists
-      if [ ! -f "$(params.dockerfile)" ]; then
-        echo "❌ Dockerfile not found: $(params.dockerfile)"
-        ls -la
-        exit 1
-      fi
-      
-      echo "🔨 Building image..."
-      buildah --storage-driver=$(params.storage-driver) bud \
-        -f "$(params.dockerfile)" \
-        -t "$(params.output-image)" \
-        .
-      
-      echo "🚀 Pushing image..."
-      buildah --storage-driver=$(params.storage-driver) push \
-        "$(params.output-image)" \
-        "docker://$(params.output-image)"
-      
-      echo "✅ Build and push completed successfully"
+    - name: dockerfile
+      description: Dockerfile path
+      type: string
+      default: "Dockerfile"
+    - name: storage-driver
+      description: Storage driver
+      type: string
+      default: "vfs"
+    - name: source-context
+      description: Source context directory
+      type: string
+      default: "."
+    - name: output-image
+      description: Output image URL
+      type: string
+  steps:
+    - name: build-and-push
+      image: quay.io/containers/buildah:v1.39.3
+      workingDir: /workspace/source
+      securityContext:
+        privileged: true
+      command: ["/bin/bash"]
+      args:
+        - -c
+        - |
+          set -euo pipefail
+
+          echo "🚀 Shipwright Build with Explicit Parameters (WORKING)"
+          echo "📍 Context: $(params.source-context)"
+          echo "📍 Output Image: $(params.output-image)"
+          echo "📍 Dockerfile: $(params.dockerfile)"
+          echo "📍 Storage Driver: $(params.storage-driver)"
+
+          # Navigate to source context
+          cd "$(params.source-context)"
+
+          # Verify Dockerfile exists
+          if [ ! -f "$(params.dockerfile)" ]; then
+            echo "❌ Dockerfile not found: $(params.dockerfile)"
+            ls -la
+            exit 1
+          fi
+
+          echo "🔨 Building image..."
+          buildah --storage-driver=$(params.storage-driver) bud \
+            -f "$(params.dockerfile)" \
+            -t "$(params.output-image)" \
+            .
+
+          echo "🚀 Pushing image..."
+          buildah --storage-driver=$(params.storage-driver) push \
+            "$(params.output-image)" \
+            "docker://$(params.output-image)"
+
+          echo "✅ Build and push completed successfully"

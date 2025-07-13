@@ -25,7 +25,7 @@ spec:
         
         # Create a BuildRun with timestamp to avoid conflicts
         TIMESTAMP=$(date +%s)
-        BUILDRUN_NAME="${BUILD_NAME}-beta-${TIMESTAMP}"
+        BUILDRUN_NAME="${BUILD_NAME}-${TIMESTAMP}"
         
         cat <<EOF | kubectl apply -f -
         apiVersion: shipwright.io/v1beta1
