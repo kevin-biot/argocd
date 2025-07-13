@@ -1,0 +1,56 @@
+apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  name: maven-build-optimized
+  labels:
+    tekton.dev/task: "maven-build-optimized"
+spec:
+  description: Maven build task with optimized resource limits for course environment
+  workspaces:
+    - name: source
+      description: The workspace containing the cloned repo
+  steps:
+    - name: debug
+      image: maven:3.9.0-eclipse-temurin-17
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 100m
+          memory: 256Mi
+      script: |
+        #!/bin/sh
+        echo "🔍 Checking for pom.xml at the workspace root"
+        if [ ! -f /workspace/source/pom.xml ]; then
+          echo "❌ pom.xml NOT FOUND under /workspace/source!"
+          exit 1
+        fi
+        echo "✅ pom.xml found"
+
+    - name: build
+      image: maven:3.9.0-eclipse-temurin-17
+      workingDir: /workspace/source
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: 400m
+          memory: 1Gi
+      script: |
+        #!/bin/sh
+        echo "🚀 Building with JDK 17 (optimized for course environment)"
+        echo "📊 Resource allocation: 400m CPU, 1Gi Memory"
+        
+        # Optimize Maven for limited resources
+        export MAVEN_OPTS="-Xmx768m -XX:MaxMetaspaceSize=256m"
+        
+        # Build with optimizations
+        mvn -B clean package \
+          -DskipTests=true \
+          -Duser.home=/workspace/source \
+          -Dmaven.repo.local=/workspace/source/.m2/repository \
+          --batch-mode \
+          --quiet \
+          --threads 1

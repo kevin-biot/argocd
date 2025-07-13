@@ -1,0 +1,52 @@
+apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  name: war-sanity-check-optimized
+  labels:
+    tekton.dev/task: "war-sanity-check-optimized"
+spec:
+  description: WAR file sanity check with optimized resource limits for course environment
+  workspaces:
+    - name: source
+      description: The workspace containing the built WAR file
+  steps:
+    - name: check-war
+      image: openjdk:17-jdk-alpine
+      workingDir: /workspace/source
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
+      script: |
+        #!/bin/sh
+        echo "🔍 Checking for WAR file in target directory"
+        
+        if [ ! -d "target" ]; then
+          echo "❌ target directory not found!"
+          exit 1
+        fi
+        
+        WAR_FILE=$(find target -name "*.war" | head -1)
+        if [ -z "$WAR_FILE" ]; then
+          echo "❌ No WAR file found in target directory!"
+          exit 1
+        fi
+        
+        echo "✅ Found WAR file: $WAR_FILE"
+        
+        # Check WAR file size
+        WAR_SIZE=$(stat -c%s "$WAR_FILE" 2>/dev/null || stat -f%z "$WAR_FILE")
+        echo "📦 WAR file size: $WAR_SIZE bytes"
+        
+        if [ "$WAR_SIZE" -lt 1000 ]; then
+          echo "⚠️  Warning: WAR file seems unusually small"
+        fi
+        
+        # List contents briefly
+        echo "📋 WAR file contents:"
+        jar -tf "$WAR_FILE" | head -10
+        
+        echo "✅ WAR file sanity check passed"

@@ -1,0 +1,83 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: java-webapp-pipeline-optimized
+spec:
+  description: Optimized pipeline for course environment with resource limits
+  params:
+    - name: git-url
+      type: string
+      description: Public Git repo URL
+    - name: git-revision
+      type: string
+      description: Branch, tag or commit
+      default: "dev"
+    - name: build-name
+      type: string
+      description: Shipwright Build name
+    - name: namespace
+      type: string
+      description: Target OpenShift project
+  workspaces:
+    - name: source
+      description: Where source is checked out
+  tasks:
+    - name: clone
+      taskRef:
+        name: git-clone-optimized
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.git-url)
+        - name: revision
+          value: $(params.git-revision)
+      workspaces:
+        - name: source
+          workspace: source
+
+    - name: build
+      runAfter: [clone]
+      taskRef:
+        name: maven-build-optimized
+        kind: ClusterTask
+      workspaces:
+        - name: source
+          workspace: source
+
+    - name: sanity
+      runAfter: [build]
+      taskRef:
+        name: war-sanity-check-optimized
+        kind: ClusterTask
+      workspaces:
+        - name: source
+          workspace: source
+
+    - name: shipwright
+      runAfter: [sanity]
+      taskRef:
+        name: shipwright-trigger-day3
+        kind: Task
+      params:
+        - name: BUILD_NAME
+          value: $(params.build-name)
+        - name: NAMESPACE
+          value: $(params.namespace)
+
+    - name: update-manifests
+      runAfter: [shipwright]
+      taskRef:
+        name: update-manifests-day3
+        kind: Task
+      params:
+        - name: manifest-path
+          value: k8s/deployment.yaml
+        - name: namespace
+          value: $(params.namespace)
+        - name: image-tag
+          value: $(tasks.clone.results.commit)
+        - name: git-repo-url
+          value: $(params.git-url)
+      workspaces:
+        - name: source
+          workspace: source

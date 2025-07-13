@@ -1,0 +1,60 @@
+apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  name: git-clone-optimized
+  labels:
+    tekton.dev/task: "git-clone-optimized"
+spec:
+  description: Git clone task with optimized resource limits for course environment
+  params:
+    - name: url
+      description: Repository URL to clone from
+      type: string
+    - name: revision
+      description: Revision to checkout (branch, tag, sha, ref, etc...)
+      type: string
+      default: "main"
+    - name: deleteExisting
+      description: Clean out the contents of the destination directory
+      type: string
+      default: "true"
+  workspaces:
+    - name: source
+      description: The git repo will be cloned onto this workspace
+  results:
+    - name: commit
+      description: The precise commit SHA that was cloned
+    - name: url
+      description: The URL that was cloned
+  steps:
+    - image: alpine/git
+      name: clone
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
+      script: |
+        #!/bin/sh
+        set -e
+
+        if [ "$(params.deleteExisting)" = "true" ]; then
+          echo "🧹 Cleaning out $(workspaces.source.path)"
+          rm -rf $(workspaces.source.path)/* $(workspaces.source.path)/.[!.]* || true
+        fi
+
+        echo "🔁 Cloning $(params.url) (rev=$(params.revision)) into $(workspaces.source.path)"
+        git clone --single-branch --branch "$(params.revision)" "$(params.url)" "$(workspaces.source.path)"
+
+        # Get the actual commit SHA that was cloned
+        cd "$(workspaces.source.path)"
+        COMMIT_SHA=$(git rev-parse HEAD)
+        echo "📝 Cloned commit: $COMMIT_SHA"
+
+        # Write results
+        echo -n "$COMMIT_SHA" > $(results.commit.path)
+        echo -n "$(params.url)" > $(results.url.path)
+
+        echo "✅ Clone complete"

@@ -26,7 +26,7 @@ INFRASTRUCTURE_FILES=(
   k8s/rbac/pipeline-app-role.yaml
   k8s/rbac/pipeline-app-binding.yaml
   k8s/java-webapp-imagestream.yaml
-  tekton/pipeline.yaml
+  tekton/pipeline-optimized.yaml
   shipwright/build/build.yaml
 )
 
@@ -101,9 +101,10 @@ cat <<EOF
 📂 Rendered files are in: $DEST_DIR
 
 📋 What was created:
-   ✅ Infrastructure: RBAC, ImageStream, Pipeline, Build
+   ✅ Infrastructure: RBAC, ImageStream, Optimized Pipeline, Build
    ✅ ArgoCD Application: java-webapp-$NAMESPACE  
    ✅ Tekton Tasks: update-manifests-day3, shipwright-trigger-day3
+   ✅ Resource Optimized: 550m CPU total (fits in student quota)
 
 📋 What ArgoCD will create:
    🎯 Deployment, Service, Route (managed by GitOps)
