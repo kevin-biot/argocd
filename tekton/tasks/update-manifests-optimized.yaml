@@ -3,7 +3,7 @@ kind: Task
 metadata:
   name: update-manifests-optimized
 spec:
-  description: Update manifests with optimized resource limits for course environment
+  description: Update manifests (optimized for course environment)
   params:
     - name: manifest-path
       type: string
@@ -18,13 +18,6 @@ spec:
   steps:
   - name: wait-for-build
     image: bitnami/kubectl:latest
-    resources:
-      requests:
-        cpu: 50m
-        memory: 128Mi
-      limits:
-        cpu: 100m
-        memory: 256Mi
     script: |
       #!/bin/bash
       set -euo pipefail
@@ -47,13 +40,6 @@ spec:
   - name: retag-and-update
     image: bitnami/kubectl:latest
     workingDir: $(workspaces.source.path)
-    resources:
-      requests:
-        cpu: 50m
-        memory: 128Mi
-      limits:
-        cpu: 200m
-        memory: 512Mi
     env:
       - name: GITHUB_TOKEN
         valueFrom:

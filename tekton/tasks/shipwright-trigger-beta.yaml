@@ -3,7 +3,7 @@ kind: Task
 metadata:
   name: shipwright-trigger-beta
 spec:
-  description: Shipwright v1beta1 build trigger with resource optimization
+  description: Shipwright v1beta1 build trigger
   params:
     - name: BUILD_NAME
       type: string
@@ -14,13 +14,6 @@ spec:
   steps:
     - name: trigger-build
       image: bitnami/kubectl:latest
-      resources:
-        requests:
-          cpu: 50m
-          memory: 64Mi
-        limits:
-          cpu: 100m
-          memory: 128Mi
       script: |
         #!/bin/bash
         set -euo pipefail
