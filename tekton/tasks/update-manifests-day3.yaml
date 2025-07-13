@@ -37,9 +37,31 @@ spec:
       kubectl wait --for=condition=Succeeded buildrun/${BUILD_RUN_NAME} -n $(params.namespace) --timeout=10m
       echo "✅ Shipwright BuildRun completed successfully"
       
-      # Verify the image was created
-      echo "🔍 Verifying image was pushed..."
-      sleep 5  # Allow time for image to be available
+      # NEW: Wait for ImageStreamTag to be available
+      echo "🔍 Waiting for ImageStreamTag java-webapp:latest to be available..."
+      timeout=120  # 2 minutes should be enough
+      interval=5
+      elapsed=0
+      
+      while [ $elapsed -lt $timeout ]; do
+        if oc get istag java-webapp:latest -n $(params.namespace) &>/dev/null; then
+          echo "✅ ImageStreamTag java-webapp:latest is available!"
+          oc get istag java-webapp:latest -n $(params.namespace)
+          break
+        fi
+        echo "⏳ Waiting for ImageStreamTag... (${elapsed}s/${timeout}s)"
+        sleep $interval
+        elapsed=$((elapsed + interval))
+      done
+      
+      if [ $elapsed -ge $timeout ]; then
+        echo "❌ Timeout waiting for ImageStreamTag java-webapp:latest"
+        echo "🔍 Debug info:"
+        oc get imagestream java-webapp -n $(params.namespace) -o yaml || echo "No imagestream found"
+        exit 1
+      fi
+      
+      echo "🎯 Image verification complete - proceeding to retag step"
       
   - name: retag-and-update
     image: bitnami/kubectl:latest
