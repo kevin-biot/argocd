@@ -34,7 +34,7 @@ spec:
           name: ${BUILDRUN_NAME}
           namespace: ${NAMESPACE}
         spec:
-          buildRef:
+          build:
             name: ${BUILD_NAME}
         EOF
         
