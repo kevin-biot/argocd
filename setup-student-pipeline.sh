@@ -74,6 +74,35 @@ for f in "${INFRASTRUCTURE_FILES[@]}"; do
 done
 
 echo -e "\n🎯 Setting up GitOps (ArgoCD):"
+
+# NEW: Copy rendered application manifests to k8s directory for ArgoCD
+echo "📁 Copying rendered manifests to k8s directory..."
+cp "$DEST_DIR/deployment.yaml" k8s/
+cp "$DEST_DIR/service.yaml" k8s/
+cp "$DEST_DIR/route.yaml" k8s/
+
+# Remove any infrastructure files that shouldn't be managed by ArgoCD
+rm -f k8s/*imagestream.yaml k8s/pipeline-*.yaml k8s/build*.yaml k8s/rbac/ 2>/dev/null || true
+
+echo "🔄 Committing rendered manifests to git..."
+# Check if we're on the student branch, if not switch to it
+current_branch=$(git branch --show-current)
+if [ "$current_branch" != "$NAMESPACE" ]; then
+  echo "📋 Switching to branch: $NAMESPACE"
+  git checkout "$NAMESPACE" 2>/dev/null || git checkout -b "$NAMESPACE"
+fi
+
+# Stage and commit the k8s manifests
+git add k8s/deployment.yaml k8s/service.yaml k8s/route.yaml
+if git diff --staged --quiet; then
+  echo "ℹ️  No changes to commit - manifests already up to date"
+else
+  git commit -m "Deploy rendered k8s manifests for $NAMESPACE"
+  echo "🚀 Pushing manifests to branch: $NAMESPACE"
+  git push origin "$NAMESPACE"
+fi
+
+# NOW apply ArgoCD application (after manifests are in git)
 for f in "${GITOPS_FILES[@]}"; do
   base_file=$(basename "$f")
   echo "➡️  Applying $base_file to namespace: openshift-gitops"
