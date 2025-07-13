@@ -96,7 +96,7 @@ spec:
       
       echo "✅ Source image found, proceeding with retag"
       echo "🏷️  Retagging image: latest → ${COMMIT_SHA}"
-      oc tag ${SOURCE_IMAGE} ${TARGET_IMAGE}
+      oc tag java-webapp:latest java-webapp:${COMMIT_SHA} -n ${NAMESPACE}
       
       echo "📝 Updating $(params.manifest-path) with new image tag"
       # Update deployment.yaml with full image path including new tag
