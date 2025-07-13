@@ -63,19 +63,3 @@ spec:
           value: $(params.build-name)
         - name: NAMESPACE
           value: $(params.namespace)
-
-    - name: notify-complete
-      runAfter: [shipwright]
-      taskRef:
-        name: openshift-client
-        kind: ClusterTask
-      params:
-        - name: SCRIPT
-          value: |
-            echo "🎉 Build completed successfully!"
-            echo "📦 Image pushed to: image-registry.openshift-image-registry.svc:5000/$(params.namespace)/java-webapp:latest"
-            echo "🔄 ArgoCD Image Updater will automatically detect the new image and update the deployment"
-            echo "🎯 Check ArgoCD UI to monitor the automatic deployment sync"
-            
-            # Verify the image was created
-            oc get istag java-webapp:latest -n $(params.namespace) || echo "⚠️ ImageStreamTag not found"
