@@ -34,9 +34,22 @@ GITOPS_FILES=(
   argocd/application.yaml    # ArgoCD Application - manages deployments
 )
 
-# ---------- Tekton tasks (applied directly, no templating) ----------
+# ---------- Tekton tasks (applied per-namespace, converted from ClusterTasks) ----------
 TEKTON_TASKS=(
   tekton/tasks/shipwright-trigger-beta.yaml
+  tekton/tasks/shipwright-trigger-day3.yaml
+  tekton/tasks/update-manifests-day3.yaml
+  tekton/tasks/update-manifests-optimized.yaml
+)
+
+# ---------- ClusterTasks converted to Tasks (applied per-namespace) ----------
+CONVERTED_TASKS=(
+  tekton/clustertasks/git-clone-optimized.yaml
+  tekton/clustertasks/maven-build-optimized.yaml
+  tekton/clustertasks/war-sanity-check-optimized.yaml
+  tekton/clustertasks/git-clone-day3.yaml
+  tekton/clustertasks/maven-build.yaml
+  tekton/clustertasks/war-sanity-check.yaml
 )
 
 # ---------- Application resources (rendered only - ArgoCD manages) ----------
@@ -128,6 +141,13 @@ for f in "${TEKTON_TASKS[@]}"; do
   oc apply -n "$NAMESPACE" -f "$f"
 done
 
+echo -e "\n🔧 Installing converted ClusterTasks as regular Tasks:"
+for f in "${CONVERTED_TASKS[@]}"; do
+  echo "➡️  Converting and applying $(basename "$f") to namespace: $NAMESPACE"
+  # Convert ClusterTask to Task and apply per-namespace
+  sed 's/kind: ClusterTask/kind: Task/' "$f" | oc apply -n "$NAMESPACE" -f -
+done
+
 echo -e "\n⏳ Waiting for ArgoCD to sync application..."
 sleep 5
 
@@ -144,7 +164,8 @@ cat <<EOF
 📋 What was created:
    ✅ Infrastructure: RBAC, ImageStream, Optimized Pipeline, Beta Build
    ✅ ArgoCD Application: java-webapp-$NAMESPACE  
-   ✅ Tekton Tasks: update-manifests-optimized, shipwright-trigger-beta
+   ✅ Tekton Tasks: All tasks installed per-namespace (Tekton 1.19 compatible)
+   ✅ Tekton 1.19 Fix: Converted ClusterTasks to regular Tasks with resolver syntax
    ✅ Resource Optimized: 1000m CPU total (fits in student quota)
    ✅ Shipwright Beta API: v1beta1 with system parameter auto-injection
 

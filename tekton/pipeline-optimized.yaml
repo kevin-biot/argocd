@@ -24,8 +24,14 @@ spec:
   tasks:
     - name: clone
       taskRef:
-        name: git-clone-optimized
-        kind: ClusterTask
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone-optimized
+          - name: namespace
+            value: {{NAMESPACE}}
       params:
         - name: url
           value: $(params.git-url)
@@ -38,8 +44,14 @@ spec:
     - name: build
       runAfter: [clone]
       taskRef:
-        name: maven-build-optimized
-        kind: ClusterTask
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: maven-build-optimized
+          - name: namespace
+            value: {{NAMESPACE}}
       workspaces:
         - name: source
           workspace: source
@@ -47,8 +59,14 @@ spec:
     - name: sanity
       runAfter: [build]
       taskRef:
-        name: war-sanity-check-optimized
-        kind: ClusterTask
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: war-sanity-check-optimized
+          - name: namespace
+            value: {{NAMESPACE}}
       workspaces:
         - name: source
           workspace: source
@@ -56,8 +74,14 @@ spec:
     - name: shipwright
       runAfter: [sanity]
       taskRef:
-        name: shipwright-trigger-beta
-        kind: Task
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: shipwright-trigger-beta
+          - name: namespace
+            value: {{NAMESPACE}}
       params:
         - name: BUILD_NAME
           value: $(params.build-name)

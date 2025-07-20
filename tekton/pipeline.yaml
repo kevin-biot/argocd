@@ -23,8 +23,14 @@ spec:
   tasks:
     - name: clone
       taskRef:
-        name: git-clone-day3
-        kind: ClusterTask
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone-day3
+          - name: namespace
+            value: {{NAMESPACE}}
       params:
         - name: url
           value: $(params.git-url)
@@ -37,8 +43,14 @@ spec:
     - name: build
       runAfter: [clone]
       taskRef:
-        name: maven-build
-        kind: ClusterTask
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: maven-build
+          - name: namespace
+            value: {{NAMESPACE}}
       workspaces:
         - name: source
           workspace: source
@@ -46,8 +58,14 @@ spec:
     - name: sanity
       runAfter: [build]
       taskRef:
-        name: war-sanity-check
-        kind: ClusterTask
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: war-sanity-check
+          - name: namespace
+            value: {{NAMESPACE}}
       workspaces:
         - name: source
           workspace: source
@@ -55,8 +73,14 @@ spec:
     - name: shipwright
       runAfter: [sanity]
       taskRef:
-        name: shipwright-trigger-day3
-        kind: Task
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: shipwright-trigger-day3
+          - name: namespace
+            value: {{NAMESPACE}}
       params:
         - name: BUILD_NAME
           value: $(params.build-name)
@@ -66,8 +90,14 @@ spec:
     - name: update-manifests
       runAfter: [shipwright]
       taskRef:
-        name: update-manifests-day3
-        kind: Task
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: update-manifests-day3
+          - name: namespace
+            value: {{NAMESPACE}}
       params:
         - name: manifest-path
           value: k8s/deployment.yaml
