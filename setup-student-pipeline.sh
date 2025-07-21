@@ -6,16 +6,74 @@
 set -euo pipefail
 echo "🔧 Student Pipeline Setup Script (GitOps Mode)"
 
-read -rp "🧑‍🎓  Enter student namespace: " NAMESPACE
-read -rp "🌐  Enter Git repo URL [default: https://github.com/kevin-biot/argocd.git]: " REPO_URL
-REPO_URL=${REPO_URL:-https://github.com/kevin-biot/argocd.git}
-[[ -z "$NAMESPACE" ]] && { echo "❌ Namespace is required."; exit 1; }
+# ============================================================================
+# CRITICAL: Branch Validation First
+# ============================================================================
+echo "🔍 Validating your branch setup..."
+current_branch=$(git branch --show-current 2>/dev/null || echo "no-git")
+current_dir=$(basename "$(pwd)" 2>/dev/null || echo "unknown")
 
-echo -e "\n📁 Rendering YAMLs for GitOps workflow:"
-echo "   🏷️  Namespace: $NAMESPACE"
-echo "   📦 Git Repo:  $REPO_URL"
+echo "   📁 Current directory: ${current_dir}"
+echo "   🌿 Current git branch: ${current_branch}"
+
+# Validate directory
+if [ "${current_dir}" != "argocd" ]; then
+    echo "❌ ERROR: You must run this script from the 'argocd' directory!"
+    echo ""
+    echo "🔧 Fix this by running:"
+    echo "   cd /home/coder/workspace/labs/day3-gitops/argocd"
+    echo "   ./setup-student-pipeline.sh"
+    exit 1
+fi
+
+# Validate git repository
+if [ "${current_branch}" = "no-git" ]; then
+    echo "❌ ERROR: Not in a git repository!"
+    echo ""
+    echo "🔧 Fix this by running:"
+    echo "   cd /home/coder/workspace/labs/day3-gitops"
+    echo "   rm -rf argocd"
+    echo "   git clone -b student01 https://github.com/kevin-biot/argocd"
+    echo "   cd argocd"
+    echo "   ./setup-student-pipeline.sh"
+    exit 1
+fi
+
+# Detect expected student namespace from git branch
+expected_namespace="${current_branch}"
+
+# Validate branch matches expected pattern
+if [[ ! "${current_branch}" =~ ^student[0-9]+$ ]]; then
+    echo "❌ ERROR: You're on branch '${current_branch}' but should be on a student branch!"
+    echo ""
+    echo "🔧 Fix this by running:"
+    echo "   cd /home/coder/workspace/labs/day3-gitops"
+    echo "   rm -rf argocd"
+    echo "   git clone -b student01 https://github.com/kevin-biot/argocd  # Use YOUR student ID"
+    echo "   cd argocd"
+    echo "   ./setup-student-pipeline.sh"
+    exit 1
+fi
+
+echo "✅ Branch validation passed!"
+echo "   📋 Using namespace: ${expected_namespace}"
+echo "   🎯 This matches your git branch: ${current_branch}"
+echo ""
+
+# ============================================================================
+# Setup Configuration
+# ============================================================================
+
+# Auto-configure based on git branch
+NAMESPACE="${expected_namespace}"
+REPO_URL="https://github.com/kevin-biot/argocd.git"
+
+echo "📋 Configuration auto-detected from your git branch:"
+echo "   🏷️  Namespace: ${NAMESPACE}"
+echo "   📦 Git Repo:  ${REPO_URL}"
 echo "   🎯 Mode:      GitOps (ArgoCD manages deployments)"
-read -rp "❓ Proceed with these values? (y/n): " CONFIRM
+echo ""
+read -rp "❓ Proceed with auto-detected values? (y/n): " CONFIRM
 [[ "$CONFIRM" != [yY] ]] && { echo "❌ Aborted."; exit 1; }
 
 DEST_DIR="rendered_${NAMESPACE}"
@@ -155,10 +213,10 @@ sleep 5
 echo "🔍 Checking ArgoCD Application status:"
 oc get application java-webapp-$NAMESPACE -n openshift-gitops -o jsonpath='{.status.health.status}' 2>/dev/null || echo "Application not ready yet"
 
-# ---------------------- student instructions ----------------------
+# ---------------------- STUDENT COPY-PASTE INSTRUCTIONS ----------------------
 cat <<EOF
 
-🎯 GitOps Setup Complete for namespace: $NAMESPACE
+🎉 GitOps Setup Complete for namespace: $NAMESPACE
 📂 Rendered files are in: $DEST_DIR
 
 📋 What was created:
@@ -175,33 +233,146 @@ cat <<EOF
 🌐 Your app will be available at:
       https://\$(oc get route java-webapp -n $NAMESPACE -o jsonpath='{.spec.host}')
 
-📌 Next steps for the student:
-  1.  cd $DEST_DIR
+================================================================================
+📝 COPY-PASTE INSTRUCTIONS: Follow these steps EXACTLY
+================================================================================
 
-  2.  Check ArgoCD Application sync status:
-        oc get application java-webapp-$NAMESPACE -n openshift-gitops
-        
-  3.  Trigger a Shipwright build (re-run safe):
-        oc delete buildrun --all -n $NAMESPACE --ignore-not-found
-        oc create -f buildrun-beta.yaml -n $NAMESPACE
+📝 STEP 1: Navigate to rendered directory
 
-  4.  Kick off the full pipeline (re-run safe):
-        oc delete pipelinerun --all -n $NAMESPACE --ignore-not-found
-        oc apply  -f pipeline-run.yaml -n $NAMESPACE
+Copy and paste this command:
 
-🔎 Validate with:
-        oc get buildrun -n $NAMESPACE
-        oc get pipelinerun -n $NAMESPACE
-        tkn pipelinerun list -n $NAMESPACE
+cd $DEST_DIR
 
-🎯 ArgoCD GitOps Workflow:
-        ArgoCD UI: https://openshift-gitops-server-openshift-gitops.apps.<your-domain>
-        Your ArgoCD Application: java-webapp-$NAMESPACE
-        oc get application java-webapp-$NAMESPACE -n openshift-gitops
+✅ Validate: You should see files like buildrun-beta.yaml, pipeline-run.yaml
 
-📝 GitOps Benefits:
-   • ArgoCD manages all application deployments
-   • Single source of truth (Git repository)
+ls -la
+
+---
+
+📝 STEP 2: Check ArgoCD Application status
+
+Copy and paste this command:
+
+oc get application java-webapp-$NAMESPACE -n openshift-gitops
+
+✅ Expected output: Should show your ArgoCD application
+
+---
+
+📝 STEP 3: Trigger Shipwright build (builds your container image)
+
+Copy and paste these commands ONE BY ONE:
+
+oc delete buildrun --all -n $NAMESPACE --ignore-not-found
+
+oc create -f buildrun-beta.yaml -n $NAMESPACE
+
+✅ Validate: Check build is running
+
+oc get buildrun -n $NAMESPACE
+
+---
+
+📝 STEP 4: Wait for build to complete, then trigger pipeline
+
+First, wait for build to complete (should show "Succeeded"):
+
+oc get buildrun -n $NAMESPACE -w
+
+(Press Ctrl+C when status shows "Succeeded")
+
+Then copy and paste these commands ONE BY ONE:
+
+oc delete pipelinerun --all -n $NAMESPACE --ignore-not-found
+
+oc apply -f pipeline-run.yaml -n $NAMESPACE
+
+✅ Validate: Check pipeline is running
+
+oc get pipelinerun -n $NAMESPACE
+
+---
+
+📝 STEP 5: Monitor pipeline progress
+
+Copy and paste this command to watch pipeline logs:
+
+tkn pipelinerun logs -f -n $NAMESPACE
+
+(This will follow the logs until completion)
+
+---
+
+📝 STEP 6: Access ArgoCD UI to see GitOps magic
+
+🌐 Open ArgoCD Console in your browser:
+
+https://openshift-gitops-server-openshift-gitops.apps.bootcamp-ocs-cluster.bootcamp.tkmind.net
+
+🔑 Login Instructions:
+   1. Click "LOG IN VIA OPENSHIFT" button
+   2. Username: $NAMESPACE
+   3. Password: DevOps2025!
+
+📱 Direct link to YOUR application:
+
+https://openshift-gitops-server-openshift-gitops.apps.bootcamp-ocs-cluster.bootcamp.tkmind.net/applications/openshift-gitops/java-webapp-$NAMESPACE?view=tree&resource=
+
+✅ What you should see in ArgoCD:
+   • Application: java-webapp-$NAMESPACE
+   • Status: "Synced" (green)
+   • Health: "Healthy" (green)
+   • Source: Your git branch ($NAMESPACE)
+   • Resources: Deployment, Service, Route
+
+💡 Copy these URLs to use in your browser:
+
+echo "ArgoCD Console: https://openshift-gitops-server-openshift-gitops.apps.bootcamp-ocs-cluster.bootcamp.tkmind.net"
+
+echo "Your Application: https://openshift-gitops-server-openshift-gitops.apps.bootcamp-ocs-cluster.bootcamp.tkmind.net/applications/openshift-gitops/java-webapp-$NAMESPACE?view=tree&resource="
+
+---
+
+📝 STEP 7: Verify your deployed application
+
+Copy and paste these commands to check your app:
+
+oc get pods -n $NAMESPACE
+
+oc get route java-webapp -n $NAMESPACE
+
+🌐 Get your application URL:
+
+echo "https://\$(oc get route java-webapp -n $NAMESPACE -o jsonpath='{.spec.host}')"
+
+================================================================================
+
+✅ SUCCESS CRITERIA: Your workshop is successful when:
+   ✅ Build completes successfully (buildrun shows "Succeeded")
+   ✅ Pipeline completes successfully (pipelinerun shows "Succeeded")
+   ✅ ArgoCD shows your application as "Synced" and "Healthy"
+   ✅ Your application URL responds with the Java webapp
+   ✅ You can login to ArgoCD UI with your student credentials
+   ✅ You can see your java-webapp-$NAMESPACE application in ArgoCD
+
+🚨 IMPORTANT REMINDERS:
+   • Copy-paste commands ONE BY ONE (don't copy multiple lines at once)
+   • Wait for each step to complete before proceeding
+   • Use the validation commands to check progress
+   • If something fails, re-run from that step
+
+🔧 TROUBLESHOOTING ArgoCD Access:
+   
+   If you can't see your application in ArgoCD UI:
+   1. Verify you logged in with: $NAMESPACE / DevOps2025!
+   2. Check application exists via CLI:
+      oc get application java-webapp-$NAMESPACE -n openshift-gitops
+   3. If application exists but not visible, this is an RBAC issue
+      (instructor will address ArgoCD permissions in next update)
+
+📚 GitOps Benefits you just experienced:
+   • ArgoCD manages all application deployments automatically
+   • Single source of truth (Git repository branch: $NAMESPACE)
    • Automatic drift detection and correction
    • Declarative deployment model
 
