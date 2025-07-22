@@ -259,7 +259,7 @@ oc get application java-webapp-$NAMESPACE -n openshift-gitops
 
 ---
 
-📝 STEP 3: Trigger Shipwright build (builds your container image)
+📝 STEP 3: Trigger container build
 
 Copy and paste these commands ONE BY ONE:
 
@@ -267,29 +267,15 @@ oc delete buildrun --all -n $NAMESPACE --ignore-not-found
 
 oc create -f buildrun-beta.yaml -n $NAMESPACE
 
-✅ Validate: Check build is running
-
-oc get buildrun -n $NAMESPACE
-
 ---
 
-📝 STEP 4: Wait for build to complete, then trigger pipeline
+📝 STEP 4: Trigger pipeline
 
-First, wait for build to complete (should show "Succeeded"):
-
-oc get buildrun -n $NAMESPACE -w
-
-(Press Ctrl+C when status shows "Succeeded")
-
-Then copy and paste these commands ONE BY ONE:
+Copy and paste these commands ONE BY ONE:
 
 oc delete pipelinerun --all -n $NAMESPACE --ignore-not-found
 
 oc apply -f pipeline-run.yaml -n $NAMESPACE
-
-✅ Validate: Check pipeline is running
-
-oc get pipelinerun -n $NAMESPACE
 
 ---
 
