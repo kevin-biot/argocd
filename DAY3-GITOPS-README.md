@@ -48,32 +48,20 @@ oc get application java-webapp-student01 -n openshift-gitops
 ```
 **Expected:** Application should be listed and healthy.
 
-### Step 6: Trigger Container Build
-```bash
-# Clean any existing builds
-oc delete buildrun --all -n student01 --ignore-not-found
-
-# Start new build
-oc create -f buildrun-beta.yaml -n student01
-
-# Monitor build progress
-oc get buildrun -n student01 -w
-```
-**Wait:** Until status shows "Succeeded" (press Ctrl+C to stop watching)
-
-### Step 7: Trigger Pipeline
+### Step 6: Run Complete CI/CD Pipeline
 ```bash
 # Clean any existing pipeline runs
 oc delete pipelinerun --all -n student01 --ignore-not-found
 
-# Start pipeline
+# Start pipeline (handles build and deployment)
 oc apply -f pipeline-run.yaml -n student01
 
 # Monitor pipeline
 oc get pipelinerun -n student01
 ```
+**Note:** The pipeline automatically handles container image building via Shipwright
 
-### Step 8: Monitor Pipeline Logs
+### Step 7: Monitor Pipeline Logs
 ```bash
 tkn pipelinerun logs -f -n student01
 ```
@@ -124,7 +112,6 @@ Open the URL from the command above in your browser. You should see your Java we
 ## ✅ Success Criteria
 
 Your workshop is successful when:
-- ✅ Build completes successfully (buildrun shows "Succeeded")
 - ✅ Pipeline completes successfully (pipelinerun shows "Succeeded") 
 - ✅ ArgoCD shows your application as "Synced" and "Healthy"
 - ✅ Your application URL responds with the Java webapp
@@ -144,9 +131,6 @@ If you can't see your application in ArgoCD UI:
 
 ### Build/Pipeline Issues
 ```bash
-# Check build logs
-oc logs -f buildrun/java-webapp-buildrun-beta -n student01
-
 # Check pipeline logs  
 tkn pipelinerun logs -f -n student01
 
@@ -205,9 +189,6 @@ echo "Your App URL: https://$(oc get route java-webapp -n student01 -o jsonpath=
 
 ### Essential monitoring commands:
 ```bash
-# Watch build progress
-oc get buildrun -n student01 -w
-
 # Watch pipeline progress  
 tkn pipelinerun logs -f -n student01
 

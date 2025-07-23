@@ -259,17 +259,7 @@ oc get application java-webapp-$NAMESPACE -n openshift-gitops
 
 ---
 
-📝 STEP 3: Trigger container build
-
-Copy and paste these commands ONE BY ONE:
-
-oc delete buildrun --all -n $NAMESPACE --ignore-not-found
-
-oc create -f buildrun-beta.yaml -n $NAMESPACE
-
----
-
-📝 STEP 4: Trigger pipeline
+📝 STEP 3: Run complete CI/CD pipeline
 
 Copy and paste these commands ONE BY ONE:
 
@@ -277,9 +267,7 @@ oc delete pipelinerun --all -n $NAMESPACE --ignore-not-found
 
 oc apply -f pipeline-run.yaml -n $NAMESPACE
 
----
-
-📝 STEP 5: Monitor pipeline progress
+📝 STEP 4: Monitor pipeline progress
 
 Copy and paste this command to watch pipeline logs:
 
@@ -289,7 +277,7 @@ tkn pipelinerun logs -f -n $NAMESPACE
 
 ---
 
-📝 STEP 6: Access ArgoCD UI to see GitOps magic
+📝 STEP 5: Access ArgoCD UI to see GitOps magic
 
 🌐 Open ArgoCD Console in your browser:
 
@@ -319,7 +307,7 @@ echo "Your Application: https://openshift-gitops-server-openshift-gitops.apps.bo
 
 ---
 
-📝 STEP 7: Verify your deployed application
+📝 STEP 6: Verify your deployed application
 
 Copy and paste these commands to check your app:
 
@@ -334,7 +322,6 @@ echo "https://\$(oc get route java-webapp -n $NAMESPACE -o jsonpath='{.spec.host
 ================================================================================
 
 ✅ SUCCESS CRITERIA: Your workshop is successful when:
-   ✅ Build completes successfully (buildrun shows "Succeeded")
    ✅ Pipeline completes successfully (pipelinerun shows "Succeeded")
    ✅ ArgoCD shows your application as "Synced" and "Healthy"
    ✅ Your application URL responds with the Java webapp
